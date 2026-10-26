@@ -1,0 +1,480 @@
+// 家庭管家 —— 数据模型
+//
+// 三个贯穿全库的约定（改 schema 前先读这段）：
+//
+// 1. 日历语义字段一律 @db.Date（date-only，无时区），排序/审计字段用完整 DateTime。
+//    命名后缀即契约：`*On` = 按天算的日历日，`*At` = 按时刻排序的时间戳。
+//    读出的 @db.Date 要立刻过 lib/time.ts 的 toDateOnly() 转成 "YYYY-MM-DD" 字符串。
+//
+// 2. subject（关于谁）与 assignee（谁去办）是两个独立维度，都可空。
+//    「猫咪掏耳朵」→ subject=猫咪；「提醒妈跟进房子」→ assignee=妈。
+//    按角色筛选时匹配 subjectId = X OR assigneeId = X。
+//
+// 3. Task.recurrenceId 为 null 表示一次性待办；非 null 表示它是某个周期项的一次发生。
+//    一次性待办和周期实例共用一张表，待办列表因此只有一个数据源。
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- 枚举
+
+enum MemberKind {
+  PERSON
+  PET
+}
+
+/// 登录权限。管理员负责创建和维护家人的普通账号；普通账号只能使用家庭管家。
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum TaskStatus {
+  PENDING
+  DONE
+  SKIPPED
+}
+
+/// 数据来源。AI 路径与手动路径写库时都要标出来，便于排查 AI 解析质量。
+enum Source {
+  MANUAL
+  AI
+  RECURRENCE
+}
+
+enum Freq {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  ONCE
+}
+
+/// 周期锚点语义 —— 决定「晚做了几天」时下一次怎么算。
+/// LAST_DONE：从上次实际完成日算起（护理类，如掏耳朵晚了 3 天则下次顺延）
+/// FIXED_SCHEDULE：钉死在日历上（账单类，如每月 1 号交房租，早晚交都一样）
+enum AnchorOn {
+  LAST_DONE
+  FIXED_SCHEDULE
+}
+
+/// 管家会话来自网页、QQ 私聊或 QQ 群聊。
+enum ChatChannel {
+  WEB
+  SHORTCUT
+  QQ_PRIVATE
+  QQ_GROUP
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+/// 管家先提出计划，确认后才写入家庭数据。
+enum ChatProposalStatus {
+  PENDING
+  APPLYING
+  CONFIRMED
+  CANCELLED
+}
+
+// ---------------------------------------------------------------- 登录账号
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  /// 格式 scrypt$N$r$p$saltB64$hashB64（见 lib/auth/password.ts）
+  passwordHash String
+  displayName  String
+  role         UserRole @default(MEMBER)
+  /// 停用的账号保留历史归属，但不能再登录。
+  active       Boolean  @default(true)
+  /// 关联到人形角色。宠物不登录，所以这里可空；「妈」也可以只有 Member 没有 User。
+  memberId     String?  @unique
+  member       Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
+  records Record[] @relation("RecordAuthor")
+  tasks   Task[]   @relation("TaskAuthor")
+
+  chatSessions       ChatSession[]
+  qqBindings         QqBinding[]
+  qqPairingCodes     QqPairingCode[]
+  shortcutCredential ShortcutCredential?
+  pushSubscriptions  PushSubscription[]
+  products           Product[]
+  productNotes       ProductNote[]
+}
+
+// --------------------------------------------------------------- 产品资料库（家庭共享）
+model Product {
+  id          String @id @default(cuid())
+  name        String
+  brand       String @default("")
+  model       String @default("")
+  category    String @default("")
+  description String @default("")
+  authorId    String?
+  author      User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  documents   ProductDocument[]
+  notes       ProductNote[]
+
+  @@index([updatedAt(sort: Desc), id])
+  @@index([category])
+}
+
+model ProductDocument {
+  id            String @id @default(cuid())
+  // 对话附件在确认建档前尚未关联产品，仅上传者可读取。
+  productId     String?
+  product       Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  chatMessageId String?
+  chatMessage   ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: SetNull)
+  uploadedBy    String
+  originalName  String
+  storagePath   String @unique
+  mimeType      String
+  size          Int
+  // 只有验证存储对象后才设为 true；中断的上传不出现在资料中。
+  ready         Boolean @default(false)
+  pageCount     Int?
+  extractedText String @default("")
+  textPages     Json @default("[]")
+  visionPages   Json @default("[]")
+  indexStatus   String @default("NONE")
+  createdAt     DateTime @default(now())
+  notes         ProductNote[]
+
+  @@index([productId, ready, createdAt])
+  @@index([uploadedBy, ready, createdAt])
+  @@index([chatMessageId])
+}
+
+model ProductNote {
+  id         String @id @default(cuid())
+  productId  String
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  documentId String?
+  document   ProductDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  pageNumber Int?
+  content    String
+  authorId   String?
+  author     User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([productId, createdAt(sort: Desc)])
+  @@index([documentId])
+}
+
+// ---------------------------------------------------------------- 角色（核心筛选维度）
+
+model Member {
+  id         String     @id @default(cuid())
+  /// 「我」「妈」「猫咪」
+  name       String     @unique
+  /// 别名，供 AI 与快速解析器匹配（「妈妈」「老妈」）。匹配时取最长命中。
+  aliases    String[]   @default([])
+  kind       MemberKind @default(PERSON)
+  emoji      String?
+  /// 日历圆点色，如 "#f59e0b"
+  color      String?
+  sortOrder  Int        @default(0)
+  /// 软删除。有历史记录归属的角色不能真删，否则记录会变成孤儿。
+  archivedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  user                User?
+  records             Record[]     @relation("RecordSubject")
+  assigned            Record[]     @relation("RecordAssignee")
+  tasks               Task[]       @relation("TaskSubject")
+  assignedTasks       Task[]       @relation("TaskAssignee")
+  recurrences         Recurrence[]
+  assignedRecurrences Recurrence[] @relation("RecurrenceAssignee")
+
+  @@index([archivedAt, sortOrder])
+}
+
+// ---------------------------------------------------------------- 事件（已经发生的事）
+
+model Record {
+  id         String  @id @default(cuid())
+  subjectId  String?
+  subject    Member? @relation("RecordSubject", fields: [subjectId], references: [id], onDelete: SetNull)
+  /// 谁去办。多数记录为空，只有「提醒妈…」这类才填。
+  assigneeId String?
+  assignee   Member? @relation("RecordAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  /// 「掏耳朵」—— 去掉时间、角色、触发词后的核心词
+  title String
+  note  String?
+
+  /// 日历归属日。按天算的一切逻辑都用这个。
+  occurredOn DateTime @db.Date
+  /// 精确写入时刻。只用于排序与审计。
+  occurredAt DateTime @default(now())
+
+  source   Source  @default(MANUAL)
+  authorId String?
+  author   User?   @relation("RecordAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  /// 闭环链接：这条记录是由完成哪条待办产生的。@unique 保证「完成 → 记一笔」不会重复。
+  taskId       String?     @unique
+  task         Task?       @relation("TaskCompletion", fields: [taskId], references: [id], onDelete: SetNull)
+  /// 闭环链接：这条记录属于哪个周期项（手动记的也会归属，这样历史能串起来）
+  recurrenceId String?
+  recurrence   Recurrence? @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([subjectId, occurredOn(sort: Desc)])
+  @@index([assigneeId, occurredOn(sort: Desc)])
+  @@index([occurredOn(sort: Desc)])
+}
+
+// ---------------------------------------------------------------- 周期规则（护理/账单系列的定义）
+
+model Recurrence {
+  id        String @id @default(cuid())
+  subjectId String
+  subject   Member @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  /// 谁去办。生成出来的每一次 Task 会继承它。
+  /// 与 Task 上的同名字段语义一致（见文件头部的约定 2）。
+  assigneeId String?
+  assignee   Member? @relation("RecurrenceAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  /// 「掏耳朵」
+  title String
+  note  String?
+
+  freq       Freq
+  /// 每 N 个 freq 单位。freq=DAILY, interval=14 即「每 14 天」。
+  interval   Int      @default(1)
+  anchorOn   AnchorOn @default(LAST_DONE)
+  /// 参考日。MONTHLY 时取其「日号」，并以它为基准做月底钳制（见 addMonthsClamped）。
+  anchorDate DateTime @db.Date
+
+  /// 为将来的推送预留，第一版不参与展示。
+  timeOfDay    String  @default("09:00")
+  /// 可选的指定提醒时间（家庭时区 HH:mm）；为空继续每日汇总。
+  reminderTime String?
+
+  /// 下一个尚未物化成 Task 的日期。生成引擎从这里往前走。
+  /// FIXED_SCHEDULE 完成待办时不回退游标；LAST_DONE 完成时重置它。
+  nextCursorOn DateTime  @db.Date
+  lastDoneOn   DateTime? @db.Date
+
+  active Boolean @default(true)
+  source Source  @default(MANUAL)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks   Task[]
+  records Record[]
+
+  /// AI 路径的幂等守卫：同一角色下同名周期项只建一次，重复说一遍不会建出两条。
+  @@unique([subjectId, title])
+  @@index([active, nextCursorOn])
+}
+
+// ---------------------------------------------------------------- 待办（一次具体的发生）
+
+model Task {
+  id         String  @id @default(cuid())
+  subjectId  String?
+  subject    Member? @relation("TaskSubject", fields: [subjectId], references: [id], onDelete: SetNull)
+  /// 「提醒妈房子没卖出去」→ assignee=妈
+  assigneeId String?
+  assignee   Member? @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  title String
+  note  String?
+
+  /// 到期日。日历归属与分组（逾期/今天/本周/以后）都基于它。
+  dueOn  DateTime   @db.Date
+  status TaskStatus @default(PENDING)
+
+  completedAt      DateTime?
+  /// 指定提醒时刻；为空表示仅参加每日汇总。
+  reminderAt       DateTime?
+  reminderSentAt   DateTime?
+  qqReminderSentAt DateTime?
+
+  source   Source  @default(MANUAL)
+  authorId String?
+  author   User?   @relation("TaskAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  /// null = 一次性待办；非 null = 某个周期项的一次发生。
+  recurrenceId String?
+  recurrence   Recurrence? @relation(fields: [recurrenceId], references: [id], onDelete: Cascade)
+
+  completionRecord     Record?              @relation("TaskCompletion")
+  pushDeliveries       PushDelivery[]
+  qqReminderDeliveries QqReminderDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// 生成幂等的安全网。配合 createMany({ skipDuplicates: true })，
+  /// 即使两个请求并发触发生成也不会产生重复待办 —— 惰性补齐因此可以安全地跑在读路径上，不需要锁。
+  /// Postgres 唯一索引里 NULL 互不相等，所以一次性待办（recurrenceId=null）天然不受此约束限制。
+  @@unique([recurrenceId, dueOn])
+  @@index([status, dueOn])
+  @@index([status, reminderAt])
+  @@index([subjectId, status, dueOn])
+  @@index([assigneeId, status, dueOn])
+  @@index([dueOn])
+}
+
+// ---------------------------------------------------------------- 管家对话
+
+/// 每个入口各有一段会话历史，但最终都调用同一套管家服务。
+/// scope 是服务端生成的稳定键，例如 web:<userId> 或 qq:group:<group>:<member>。
+model ChatSession {
+  id      String      @id @default(cuid())
+  scope   String      @unique
+  channel ChatChannel
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ChatMessage[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  role    ChatRole
+  content String   @db.Text
+
+  /// QQ message id / 浏览器生成的幂等键。助手消息为空。
+  sourceKey String? @unique
+
+  /// 仅助手的提案消息有值；JSON 内容从服务端生成，客户端只提交消息 id 来确认。
+  proposal       Json?
+  proposalStatus ChatProposalStatus?
+
+  createdAt DateTime @default(now())
+
+  attachments ProductDocument[]
+
+  @@index([sessionId, createdAt])
+  @@index([sessionId, proposalStatus, createdAt(sort: Desc)])
+}
+
+/// QQ 的私聊 openid 与群成员 openid 可能不同，因此一个家庭账号可有多条绑定。
+model QqBinding {
+  /// 启用表示允许将家庭的指定时间待办发送到该群。私聊不启用。
+  remindersEnabled   Boolean   @default(false)
+  remindersEnabledAt DateTime?
+  reminderLastError  String?
+  reminderLastSentAt DateTime?
+  id                 String    @id @default(cuid())
+  lookupKey          String    @unique
+  openId             String
+  groupId            String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// 网页生成的一次性短码。QQ 中发送 `/bind 123456` 后建立身份绑定。
+model QqPairingCode {
+  id       String @id @default(cuid())
+  codeHash String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, expiresAt(sort: Desc)])
+}
+
+/// iPhone 快捷指令 / Apple Watch 使用的长期密钥。只保存哈希，明文仅在生成时展示一次。
+model ShortcutCredential {
+  id        String @id @default(cuid())
+  tokenHash String @unique
+  tokenHint String
+
+  /// 每个账号同一时刻只有一枚有效密钥；重新生成会让旧快捷指令立即失效。
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+}
+
+// ---------------------------------------------------------------- Web Push
+
+/// 一台设备/一个已安装的 Web App 对应一条订阅。同一账号可同时连接 iPhone、Mac 等设备。
+model PushSubscription {
+  id       String @id @default(cuid())
+  endpoint String @unique @db.Text
+  p256dh   String @db.Text
+  auth     String @db.Text
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastUsedAt DateTime @default(now())
+
+  deliveries PushDelivery[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+/// 每条待办每天最多向每台设备推送一次，避免 cron 重试产生重复通知。
+model PushDelivery {
+  id             String           @id @default(cuid())
+  subscriptionId String
+  subscription   PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  taskId         String
+  task           Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  sentOn         DateTime         @db.Date
+  createdAt      DateTime         @default(now())
+
+  @@unique([subscriptionId, taskId, sentOn])
+  @@index([sentOn])
+}
+
+/// 群提醒按“群 + 待办 + 计划时间”去重，同群多人绑定也只投递一次。
+model QqReminderDelivery {
+  id         String    @id @default(cuid())
+  groupId    String
+  taskId     String
+  task       Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reminderAt DateTime
+  sentAt     DateTime?
+  claimToken String
+  leaseUntil DateTime
+
+  @@unique([groupId, taskId, reminderAt])
+}

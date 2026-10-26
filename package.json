@@ -1,0 +1,85 @@
+{
+  "name": "family-note",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "prisma generate && node scripts/copy-pdf-worker.mjs",
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify:auth": "tsx scripts/verify-auth.mts",
+    "verify:http": "tsx scripts/verify-http.mts",
+    "verify:login": "tsx scripts/verify-login-browser.mts",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:generate": "prisma generate",
+    "verify:clean": "tsx scripts/clean-test-data.mts",
+    "verify:all": "bash scripts/verify-all.sh",
+    "db:deploy": "prisma migrate deploy",
+    "db:setup": "pnpm db:deploy && pnpm db:seed",
+    "check:release": "node scripts/check-release.mjs"
+  },
+  "dependencies": {
+    "@ai-sdk/deepseek": "3.0.44",
+    "@base-ui/react": "^1.8.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@supabase/supabase-js": "2.118.0",
+    "ai": "^7.0.101",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.3.0",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.46.0",
+    "next": "16.3.5",
+    "pdfjs-dist": "6.4.299",
+    "prisma": "^7.10.0",
+    "react": "19.2.8",
+    "react-day-picker": "^10.0.1",
+    "react-dom": "19.2.8",
+    "shadcn": "^4.21.0",
+    "tw-animate-css": "^1.4.0",
+    "web-push": "^3.6.7",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.13.4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
+    "@vercel/config": "^0.7.1",
+    "dotenv": "^17.4.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.13",
+    "typescript": "^5",
+    "vitest": "^5.0.0"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma",
+      "esbuild"
+    ]
+  },
+  "description": "Self-hosted family notes, tasks, reminders, AI housekeeper and private product manuals.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/askxiaozhang/family-note.git"
+  },
+  "bugs": {
+    "url": "https://github.com/askxiaozhang/family-note/issues"
+  }
+}

@@ -1,0 +1,36 @@
+name: Verify source and privacy
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:release
+      - run: pnpm test
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm typecheck
+      - name: Scan commit history with Gitleaks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/gitleaks"
+          cd "$RUNNER_TEMP/gitleaks"
+          gh release download v8.30.1 -R gitleaks/gitleaks -p gitleaks_8.30.1_linux_x64.tar.gz -p gitleaks_8.30.1_checksums.txt
+          awk '$2 == "gitleaks_8.30.1_linux_x64.tar.gz"' gitleaks_8.30.1_checksums.txt | sha256sum -c -
+          tar -xzf gitleaks_8.30.1_linux_x64.tar.gz
+          cd "$GITHUB_WORKSPACE"
+          "$RUNNER_TEMP/gitleaks/gitleaks" git --redact --no-banner .

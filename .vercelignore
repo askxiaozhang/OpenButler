@@ -1,0 +1,21 @@
+# Local tooling and generated files are not deployment source.
+.codegraph/
+.cursor/
+.agents/
+.codex/
+.git/
+.vercel/
+.next/
+node_modules/
+public/pdfjs/
+src/generated/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Production secrets are provided by Vercel Environment Variables.
+.env*
+!.env.example
+
+# Temporary local verification helpers.
+scripts/.*
