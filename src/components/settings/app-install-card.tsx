@@ -15,7 +15,7 @@ export function AppInstallCard() {
     setMessage(null);
     startTransition(async () => {
       const accepted = await install();
-      setMessage(accepted ? "家庭管家已安装，可以从桌面或应用列表打开。" : "已取消安装。需要时可以再点一次。");
+      setMessage(accepted ? "Open家庭管家已安装，可以从桌面或应用列表打开。" : "已取消安装。需要时可以再点一次。");
     });
   }
 
@@ -28,7 +28,7 @@ export function AppInstallCard() {
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3">
-              <p className="font-medium">安装家庭管家 App</p>
+              <p className="font-medium">安装Open家庭管家 App</p>
               {installed ? (
                 <span className="flex items-center gap-1 text-xs text-emerald-700"><Check className="size-3.5" />已安装</span>
               ) : null}

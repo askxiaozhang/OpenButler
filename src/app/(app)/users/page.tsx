@@ -3,7 +3,7 @@ import { UserManagement } from "@/components/users/user-management";
 import { requireAdmin } from "@/lib/auth/guard";
 import { db } from "@/lib/db";
 
-export const metadata = { title: "账号管理 · 家庭管家" };
+export const metadata = { title: "账号管理 · Open家庭管家" };
 
 export default async function UsersPage() {
   await requireAdmin();

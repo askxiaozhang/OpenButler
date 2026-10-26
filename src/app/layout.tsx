@@ -3,12 +3,12 @@ import { PwaProvider } from "@/components/pwa/pwa-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "家庭管家",
-  description: "家庭记事、周期提醒与 AI 管家",
+  title: "OpenButler · Open家庭管家",
+  description: "你的开源 AI 家庭管家，让生活琐事有人记、有人提醒。",
   // PWA：手机上「添加到主屏幕」后按独立 App 打开，而不是套在浏览器地址栏里
   appleWebApp: {
     capable: true,
-    title: "家庭管家",
+    title: "Open家庭管家",
     statusBarStyle: "default",
   },
 };

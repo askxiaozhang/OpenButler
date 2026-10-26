@@ -21,7 +21,7 @@ import {
   today,
 } from "@/lib/time";
 
-export const metadata = { title: "日历 · 家庭管家" };
+export const metadata = { title: "日历 · Open家庭管家" };
 
 /**
  * 日历页。

@@ -8,7 +8,7 @@ import { byMember, entryInclude, toTaskView } from "@/lib/queries";
 import { today } from "@/lib/time";
 import { ensureGenerated } from "@/lib/recurrence/engine";
 
-export const metadata = { title: "待办 · 家庭管家" };
+export const metadata = { title: "待办 · Open家庭管家" };
 
 export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
   await requireUser();

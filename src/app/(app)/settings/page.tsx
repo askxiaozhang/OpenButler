@@ -12,7 +12,7 @@ import { verifyPassword } from "@/lib/auth/password";
 import { db } from "@/lib/db";
 import { isAiEnabled, AI_MODEL } from "@/lib/ai/config";
 
-export const metadata = { title: "我的 · 家庭管家" };
+export const metadata = { title: "我的 · Open家庭管家" };
 
 /** 兼容旧版部署：检测历史弱口令。新安装要求自行配置至少 12 位密码。 */
 const DEFAULT_SEED_PASSWORD = "family123";

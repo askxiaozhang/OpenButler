@@ -12,8 +12,8 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "家庭管家",
-    short_name: "家庭管家",
+    name: "OpenButler · Open家庭管家",
+    short_name: "OpenButler",
     id: "/",
     description: "家庭记事、周期提醒与 AI 管家",
     start_url: "/",

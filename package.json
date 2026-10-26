@@ -1,5 +1,5 @@
 {
-  "name": "family-note",
+  "name": "openbutler",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -70,16 +70,16 @@
       "esbuild"
     ]
   },
-  "description": "Self-hosted family notes, tasks, reminders, AI housekeeper and private product manuals.",
+  "description": "OpenButler — your self-hosted, open-source AI family assistant.",
   "license": "MIT",
   "engines": {
     "node": ">=24.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/askxiaozhang/family-note.git"
+    "url": "https://github.com/askxiaozhang/OpenButler.git"
   },
   "bugs": {
-    "url": "https://github.com/askxiaozhang/family-note/issues"
+    "url": "https://github.com/askxiaozhang/OpenButler/issues"
   }
 }

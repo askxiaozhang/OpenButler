@@ -8,7 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "产品资料库 · 家庭管家" };
+export const metadata = { title: "产品资料库 · Open家庭管家" };
 const PAGE_SIZE = 24;
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireUser();

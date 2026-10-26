@@ -14,7 +14,7 @@ self.addEventListener("push", (event) => {
     data = {};
   }
 
-  const title = data.title || "家庭管家";
+  const title = data.title || "Open家庭管家";
   const options = {
     body: data.body || "有新的家庭待办需要处理。",
     icon: "/icon-192.png",

@@ -61,11 +61,11 @@ export function AppShell({
     <div className="flex min-h-dvh flex-1 flex-col md:flex-row">
       {/* 桌面端侧栏 */}
       <aside className="bg-sidebar text-sidebar-foreground sticky top-0 hidden h-dvh w-60 shrink-0 flex-col px-5 py-8 md:flex lg:w-64">
-        <Link href="/" className="mb-12 flex items-center gap-3 px-2" aria-label="家庭管家首页">
+        <Link href="/" className="mb-12 flex items-center gap-3 px-2" aria-label="Open家庭管家首页">
           <span className="flex size-11 items-center justify-center rounded-2xl bg-sidebar-primary text-sidebar-primary-foreground">
             <House className="size-6" strokeWidth={1.6} />
           </span>
-          <span><span className="block text-lg font-semibold tracking-wider">家庭管家</span><span className="mt-1 block text-[10px] tracking-[0.22em] text-sidebar-foreground/60">OUR LITTLE HOME</span></span>
+          <span><span className="block text-lg font-semibold tracking-wide">OpenButler</span><span className="mt-1 block text-[10px] tracking-[0.22em] text-sidebar-foreground/60">Open家庭管家</span></span>
         </Link>
         <p className="mb-4 px-3 text-[11px] tracking-widest text-sidebar-foreground/50">家的日常</p>
 

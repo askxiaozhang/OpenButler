@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Family Note 开发约定
+# OpenButler 开发约定
 
 - Next.js 16 / React 19 / Prisma 7。改动前读取已安装依赖的对应文档。
 - 日期计算统一走 `src/lib/time.ts`；Client Component 的“今天”由服务端传入。

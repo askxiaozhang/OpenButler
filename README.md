@@ -1,8 +1,32 @@
-# 家庭管家 · Family Note
+# OpenButler · Open家庭管家
+
+**你的开源 AI 家庭管家，让生活琐事有人记、有人提醒。**
 
 可自行部署的家庭记事、待办、周期提醒和 AI 管家。支持网页 / PWA、QQ 机器人、Siri / Apple Watch，以及私有产品说明书资料库。
 
 **这是实现方案与源码，不是公共在线服务。** 使用者需自行创建数据库、存储和机器人，填写自己的密钥、域名与账号。仓库只包含建表结构，不包含家庭记录、数据库备份、上传文件、登录凭据或作者的线上资源配置。
+
+## 产品预览
+
+以下为真实应用界面，使用本地隔离环境中的虚构演示数据。AI 产品资料卡为演示状态；不包含真实家庭记录、账号、密钥或上传资料，安装后也不会自动生成这些数据。
+
+### 一眼看清今天的安排
+
+![OpenButler 首页：今日待办、后续安排与家庭成员](docs/images/dashboard.png)
+
+### 把说明书交给管家，核对后归档
+
+![OpenButler 管家对话：PDF 附件与可确认的产品资料卡](docs/images/ai-product-import.png)
+
+### 说明书与使用笔记，集中收藏
+
+![OpenButler 产品资料库：按产品分类和关键词查找说明书与笔记](docs/images/product-library.png)
+
+<details>
+<summary>查看手机待办界面</summary>
+<br />
+<img src="docs/images/mobile-tasks.png" alt="OpenButler 手机端：待办分组、成员筛选和底部导航" width="320" />
+</details>
 
 ## 功能
 
@@ -20,8 +44,8 @@
 需要 Node.js 24+、pnpm 10，以及一套**自己管理的空 PostgreSQL 数据库**。首次安装：
 
 ```bash
-git clone https://github.com/askxiaozhang/family-note.git
-cd family-note
+git clone https://github.com/askxiaozhang/OpenButler.git
+cd OpenButler
 corepack enable
 pnpm install --frozen-lockfile
 cp .env.example .env.local

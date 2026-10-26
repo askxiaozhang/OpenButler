@@ -48,7 +48,7 @@ export function UserManagement({ users, members }: { users: UserRow[]; members: 
           <div>
             <p className="font-medium">管理员负责发放账号</p>
             <p className="text-muted-foreground mt-1 text-xs leading-5">
-              普通用户能使用家庭管家，但不能进入账号管理。新建账号后，把用户名和你设置的初始密码私下发给家人即可。
+              普通用户能使用Open家庭管家，但不能进入账号管理。新建账号后，把用户名和你设置的初始密码私下发给家人即可。
             </p>
           </div>
         </div>

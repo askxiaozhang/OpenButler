@@ -4,7 +4,7 @@ import { MemberFormDialog } from "@/components/members/member-form-dialog";
 import { requireUser } from "@/lib/auth/guard";
 import { db } from "@/lib/db";
 
-export const metadata = { title: "角色管理 · 家庭管家" };
+export const metadata = { title: "角色管理 · Open家庭管家" };
 
 export default async function MembersPage() {
   await requireUser();

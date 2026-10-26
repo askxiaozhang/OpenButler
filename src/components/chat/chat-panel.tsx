@@ -131,7 +131,7 @@ export function ChatPanel({ initialMessages, attachmentsConfigured = false, init
           <Sparkles className="size-5" strokeWidth={1.6} />
         </span>
         <div>
-          <h2 className="text-sm font-semibold">家庭管家</h2>
+          <h2 className="text-sm font-semibold">Open家庭管家</h2>
           <p className="text-muted-foreground mt-0.5 text-xs">先理解，再确认；不会悄悄改动记录</p>
         </div>
       </div>

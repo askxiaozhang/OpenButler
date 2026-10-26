@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { productStorageConfigured } from "@/lib/products/storage";
 import { formatZhShort, todayFrom } from "@/lib/time";
 
-export const metadata = { title: "产品手记 · 家庭管家" };
+export const metadata = { title: "产品手记 · Open家庭管家" };
 export default async function ProductPage({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {

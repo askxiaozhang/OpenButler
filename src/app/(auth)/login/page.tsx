@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentUser } from "@/lib/auth/guard";
 
-export const metadata = { title: "登录 · 家庭管家" };
+export const metadata = { title: "登录 · Open家庭管家" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   // 已登录的直接放行，免得看到登录页还要再点一次
@@ -19,10 +19,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <section className="relative flex flex-col justify-between overflow-hidden bg-sidebar p-8 text-sidebar-foreground md:min-h-[540px] md:p-10">
           <div className="flex items-center gap-3">
             <House className="size-6" strokeWidth={1.5} />
-            <span className="text-lg font-semibold tracking-wider">家庭管家</span>
+            <span className="text-lg font-semibold tracking-wide">OpenButler</span>
           </div>
           <div className="relative z-10 mt-12 md:my-12">
-            <p className="mb-5 text-[10px] tracking-[0.25em] text-sidebar-foreground/55">OUR LITTLE HOME</p>
+            <p className="mb-5 text-[10px] tracking-[0.25em] text-sidebar-foreground/55">Open家庭管家</p>
             <h1 className="text-3xl leading-relaxed font-medium tracking-wide md:text-4xl">小事有人记，<br />日子更从容。</h1>
             <p className="mt-5 max-w-xs text-sm leading-7 text-sidebar-foreground/65">家人的叮嘱，宠物的护理，<br />还有那些值得记住的日常。</p>
           </div>

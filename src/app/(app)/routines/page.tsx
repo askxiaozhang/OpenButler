@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { ensureGenerated } from "@/lib/recurrence/engine";
 import { toDateOnly, today } from "@/lib/time";
 
-export const metadata = { title: "周期事项 · 家庭管家" };
+export const metadata = { title: "周期事项 · Open家庭管家" };
 
 export default async function RoutinesPage() {
   await requireUser();

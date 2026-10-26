@@ -53,7 +53,7 @@ export function PushSettingsCard({
         const nextPermission = await Notification.requestPermission();
         setPermission(nextPermission);
         if (nextPermission !== "granted") {
-          setMessage("没有获得通知权限。可以在 iPhone 设置 → 通知 → 家庭管家中重新开启。");
+          setMessage("没有获得通知权限。可以在 iPhone 设置 → 通知 → Open家庭管家中重新开启。");
           return;
         }
         const registration = await navigator.serviceWorker.ready;
@@ -76,7 +76,7 @@ export function PushSettingsCard({
         setMessage("通知已开启。每天上午 9 点会提醒到期和逾期待办。");
       } catch (error) {
         console.error("[push.enable]", error);
-        setMessage("开启通知失败，请确认已从主屏幕图标打开家庭管家。");
+        setMessage("开启通知失败，请确认已从主屏幕图标打开Open家庭管家。");
       }
     });
   }

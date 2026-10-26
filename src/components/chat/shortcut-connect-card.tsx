@@ -63,7 +63,7 @@ export function ShortcutConnectCard({
           </span>
           <div>
             <h2 className="text-sm font-semibold">Siri 与 Apple Watch</h2>
-            <p className="text-muted-foreground mt-1 text-xs leading-5">抬腕或唤醒 Siri，直接告诉家庭管家。</p>
+            <p className="text-muted-foreground mt-1 text-xs leading-5">抬腕或唤醒 Siri，直接告诉Open家庭管家。</p>
           </div>
         </div>
         <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -114,7 +114,7 @@ export function ShortcutConnectCard({
           <details className="rounded-2xl border px-4 py-3 text-xs" open={Boolean(token)}>
             <summary className="cursor-pointer select-none font-medium">在 iPhone 上创建快捷指令</summary>
             <ol className="text-muted-foreground mt-3 list-decimal space-y-2 pl-4 leading-5">
-              <li>新建快捷指令，命名为“家庭管家”。</li>
+              <li>新建快捷指令，命名为“Open家庭管家”。</li>
               <li>添加“听写文本”。</li>
               <li>添加“获取 URL 内容”，方法选 POST，请求正文选 JSON。</li>
               <li>JSON 增加文本字段 <code>text</code>，值选“听写的文本”。</li>
@@ -134,7 +134,7 @@ export function ShortcutConnectCard({
 
           <div className="flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-xs leading-5 text-muted-foreground">
             <Watch className="mt-0.5 size-4 shrink-0" />
-            <p>对 Siri 说“家庭管家”，或把它加入手表表盘。要保存提案，再运行一次并说“确认”。</p>
+            <p>对 Siri 说“Open家庭管家”，或把它加入手表表盘。要保存提案，再运行一次并说“确认”。</p>
           </div>
         </>
       )}
